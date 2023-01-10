@@ -38,7 +38,7 @@ dependencies {
 	implementation("org.springframework.integration:spring-integration-websocket")
 	implementation("org.springframework.boot:spring-boot-starter-data-jpa:2.7.5")
 	developmentOnly("org.springframework.boot:spring-boot-devtools")
-	runtimeOnly("mysql:mysql-connector-java")
+//	runtimeOnly("mysql:mysql-connector-java")
 	implementation("org.springframework.integration:spring-integration-ws")
 	implementation("org.springframework.session:spring-session-core")
 	compileOnly("org.projectlombok:lombok")

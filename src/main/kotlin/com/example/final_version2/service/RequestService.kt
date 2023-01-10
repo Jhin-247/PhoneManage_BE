@@ -35,13 +35,13 @@ class RequestService {
         val result = mutableListOf<Request>()
 
         for (request in allKidRequest) {
-            if (request.child.email == email && request.action == Constants.RequestType.REQUEST_ADD_CHILD || request.action == Constants.RequestType.REQUEST_ADD_PARTNER) {
+            if (request.child.email == email && (request.action == Constants.RequestType.REQUEST_ADD_CHILD || request.action == Constants.RequestType.REQUEST_ADD_PARTNER)) {
                 result.add(request)
             }
         }
 
         for (request in allParentRequest) {
-            if (request.partner.email == email && request.action == Constants.RequestType.REQUEST_ADD_CHILD || request.action == Constants.RequestType.REQUEST_ADD_PARTNER) {
+            if (request.partner.email == email && (request.action == Constants.RequestType.REQUEST_ADD_CHILD || request.action == Constants.RequestType.REQUEST_ADD_PARTNER)) {
                 result.add(request)
             }
         }

@@ -2,6 +2,7 @@ package com.example.final_version2.controller
 
 import com.example.final_version2.base.BaseResponse
 import com.example.final_version2.model.ItemClass
+import com.example.final_version2.model.JoinClassRequest
 import com.example.final_version2.model.User
 import com.example.final_version2.service.ClassService
 import com.example.final_version2.utils.MyStringUtils
@@ -74,15 +75,63 @@ class ClassController {
     }
 
     @PostMapping("join_class")
-    fun joinClass(
+    fun requestJoinClass(
         @RequestParam("class_id") classId: Long,
         @RequestParam("student_email") userEmail: String
     ): BaseResponse<Any> {
         val studentEmail = MyStringUtils().escapeDoubleQuotes(userEmail)
-        return classService.joinClass(
+        return classService.requestJoinClass(
             classId,
             studentEmail
         )
     }
+
+    @PostMapping("accept_join_class")
+    fun acceptJoinClass(
+        @RequestParam("request_id") requestId: Long
+    ): BaseResponse<List<JoinClassRequest>> {
+        return classService.acceptJoinClass(
+            requestId
+        )
+    }
+
+    @PostMapping("deny_join_class")
+    fun denyJoinClass(
+        @RequestParam("request_id") requestId: Long
+    ): BaseResponse<List<JoinClassRequest>> {
+        return classService.denyJoinClass(
+            requestId
+        )
+    }
+
+    @PostMapping("remove_from_class")
+    fun removeFromClass(
+        @RequestParam("student_id") studentId: Long,
+        @RequestParam("class_id") classId: Long
+    ): BaseResponse<List<User>> {
+        return classService.removeFromClass(
+            studentId,
+            classId
+        )
+    }
+
+    @PostMapping("banned_from_class")
+    fun banFromClass(
+        @RequestParam("student_id") studentId: Long,
+        @RequestParam("class_id") classId: Long
+    ): BaseResponse<List<User>> {
+        return classService.banFromClass(
+            studentId,
+            classId
+        )
+    }
+
+    @GetMapping("get_class_request")
+    fun getClassRequest(
+        @RequestParam("class_id") classId: Long
+    ): BaseResponse<List<JoinClassRequest>> {
+        return classService.getClassRequest(classId)
+    }
+
 
 }

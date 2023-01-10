@@ -23,12 +23,6 @@ class UserService {
     private lateinit var childRepository: ChildRepository
 
     @Autowired
-    private lateinit var userRelationshipRepository: UserRelationshipRepository
-
-    @Autowired
-    private lateinit var notificationService: NotificationService
-
-    @Autowired
     private lateinit var addParentRequestRepository: AddParentRequestRepository
 
     @Autowired
@@ -36,28 +30,6 @@ class UserService {
 
     @Autowired
     private lateinit var teacherRepository: TeacherRepository
-
-    fun createNormalUser(
-        email: String,
-        password: String,
-        username: String,
-        role: Int
-    ): BaseResponse<User> {
-        val user = userRepository.searchUserByEmail(email)
-        if (user.isPresent) {
-            return resultExisted()
-        }
-        val userToSave = User()
-        userToSave.username = username
-        userToSave.role = role
-        userToSave.email = email
-        userToSave.password = password
-        userToSave.accessToken = System.currentTimeMillis().toString()
-        userToSave.uid = System.currentTimeMillis().toString()
-        val result = userRepository.save(userToSave)
-        return resultSuccess(result)
-    }
-
     fun createParentUser(
         email: String,
         password: String,
@@ -150,42 +122,6 @@ class UserService {
         }
     }
 
-    fun changeUsername(email: String, username: String): BaseResponse<User> {
-        val user = userRepository.searchUserByEmail(email)
-        return if (user.isPresent) {
-            val myUser = user.get()
-            myUser.username = username
-            val result = userRepository.save(myUser)
-            resultSuccess(result)
-        } else {
-            resultError("No email found")
-        }
-    }
-
-    fun createSubUser(
-        superUser: String,
-        email: String,
-        password: String,
-        username: String,
-        role: Int
-    ): BaseResponse<User> {
-        val user = userRepository.searchUserByEmail(email)
-        if (user.isPresent) {
-            return resultExisted()
-        }
-        val userToSave = User()
-        userToSave.username = username
-        userToSave.role = role
-        userToSave.email = email
-        userToSave.password = password
-        userToSave.accessToken = "-1"
-        userToSave.uid = System.currentTimeMillis().toString()
-        val result = userRepository.save(userToSave)
-
-
-        return resultSuccess(result)
-    }
-
     fun createChildUser(
         superUser: String,
         emailToSave: String,
@@ -225,10 +161,6 @@ class UserService {
         }
     }
 
-    fun findAll(): BaseResponse<List<User>> {
-        return resultSuccess(userRepository.findAll())
-    }
-
     fun getAllChildren(email: String): BaseResponse<List<User>> {
         val childrenList = childRepository.findAll()
         val result = mutableListOf<Child>()
@@ -244,10 +176,6 @@ class UserService {
         } else {
             resultSuccess(result)
         }
-    }
-
-    fun uploadUserUsage(email: String, appPackageName: String, time: Long, action: Int): BaseResponse<Boolean> {
-        return resultSuccess(true)
     }
 
     fun requestAddPartner(
@@ -315,24 +243,6 @@ class UserService {
             resultEmpty()
         } else {
             resultSuccess(result)
-        }
-    }
-
-    fun handleRequestAction(email: String, requestId: Long, action: Int): BaseResponse<UserRelationshipRequest> {
-        val request = userRelationshipRepository.findById(requestId).get()
-        val lastRequest = userRelationshipRepository.getLastRequest(request.requester!!, request.receiver!!).get()
-        var newRequest = UserRelationshipRequest()
-        if (lastRequest.action == Constants.RequestType.REQUEST_ADD_PARTNER) {
-            newRequest.action = action
-            newRequest.requester = request.requester
-            newRequest.receiver = request.receiver
-            newRequest.requestTime = System.currentTimeMillis()
-            newRequest = userRelationshipRepository.save(newRequest)
-        }
-        return if (request.requester == null) {
-            resultError("Something went wrong")
-        } else {
-            resultSuccess(newRequest)
         }
     }
 

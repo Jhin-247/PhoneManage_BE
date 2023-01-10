@@ -3,6 +3,7 @@ package com.example.final_version2.service
 import com.example.final_version2.base.*
 import com.example.final_version2.common.Constants
 import com.example.final_version2.model.App
+import com.example.final_version2.model.AppSetting
 import com.example.final_version2.model.AppUsage
 import com.example.final_version2.model.Report
 import com.example.final_version2.repository.*
@@ -32,6 +33,9 @@ class AppService {
     @Autowired
     private lateinit var reportRepository: ReportRepository
 
+    @Autowired
+    private lateinit var appSettingRepository: AppSettingRepository
+
     fun uploadApp(appName: String, appPackage: String, appIcon: MultipartFile): BaseResponse<Boolean> {
 
         val existedApp = appRepository.getAppByAppPackage(appPackage)
@@ -54,7 +58,7 @@ class AppService {
         appName: String,
         time: Long,
         action: Int
-    ): BaseResponse<Boolean> {
+    ): BaseResponse<AppUsage> {
         val user = userRepository.searchUserByEmail(email).get()
         val app = appRepository.getAppByAppPackage(appPackage)
         if (app.isPresent) {
@@ -63,20 +67,17 @@ class AppService {
             result.action = action
             result.time = time
             result.user = user
-            appUsageRepository.save(result)
-            return resultSuccess(true)
+            val savedResult = appUsageRepository.save(result)
+            return resultSuccess(savedResult)
         } else {
-            val newApp = App()
-            newApp.appName = appName
-            newApp.packageName = appPackage
-            val savedApp = appRepository.save(newApp)
+            val savedApp = saveApp(appName, appPackage)
             val result = AppUsage()
             result.app = savedApp
             result.action = action
             result.time = time
             result.user = user
-            appUsageRepository.save(result)
-            return resultNeedUpload(true)
+            val savedResult = appUsageRepository.save(result)
+            return resultNeedUpload(savedResult)
         }
 
     }
@@ -111,6 +112,9 @@ class AppService {
                 result.add(appUsage)
             }
         }
+        result.sortByDescending {
+            it.time
+        }
         return if (result.isEmpty()) {
             resultEmpty()
         } else {
@@ -126,41 +130,32 @@ class AppService {
         action: Int,
         classId: Long
     ): BaseResponse<Boolean> {
-        val user = userRepository.searchUserByEmail(email).get()
+        val usage = insertAppUsage(email, appPackage, appName, time, action).data!!
         val app = appRepository.getAppByAppPackage(appPackage)
-        if (app.isPresent) {
-            val result = AppUsage()
-            result.app = app.get()
-            result.action = action
-            result.time = time
-            result.user = user
-            val savedResult = appUsageRepository.save(result)
-            val report = Report()
-            report.appUsage = savedResult
-            report.time = savedResult.time
-            report.studentClass = classRepository.findById(classId).get()
-            report.description = ""
-            reportRepository.save(report)
-            return resultSuccess(true)
+        return if (app.isPresent) {
+            saveReport(usage, classId)
+            resultSuccess(true)
         } else {
-            val newApp = App()
-            newApp.appName = appName
-            newApp.packageName = appPackage
-            val savedApp = appRepository.save(newApp)
-            val result = AppUsage()
-            result.app = savedApp
-            result.action = action
-            result.time = time
-            result.user = user
-            val savedResult = appUsageRepository.save(result)
-            val report = Report()
-            report.appUsage = savedResult
-            report.time = savedResult.time
-            report.studentClass = classRepository.findById(classId).get()
-            report.description = ""
-            reportRepository.save(report)
-            return resultNeedUpload(true)
+            saveApp(appName, appPackage)
+            saveReport(usage, classId)
+            resultNeedUpload(true)
         }
+    }
+
+    private fun saveReport(appUsage: AppUsage, classId: Long) {
+        val report = Report()
+        report.appUsage = appUsage
+        report.time = appUsage.time
+        report.studentClass = classRepository.findById(classId).get()
+        report.description = ""
+        reportRepository.save(report)
+    }
+
+    private fun saveApp(appName: String, appPackage: String): App {
+        val newApp = App()
+        newApp.appName = appName
+        newApp.packageName = appPackage
+        return appRepository.save(newApp)
     }
 
     fun getViolation(classId: Long): BaseResponse<List<Report>> {
@@ -172,6 +167,9 @@ class AppService {
                 result.add(appUsage)
             }
         }
+        result.sortByDescending {
+            it.time
+        }
         return if (result.isEmpty()) {
             resultEmpty()
         } else {
@@ -179,24 +177,73 @@ class AppService {
         }
     }
 
-//    private fun getNextSevenDaysFormattedDates(): ArrayList<String> {
-//        val formattedDateList = ArrayList<String>()
-//
-//        val calendar = Calendar.getInstance()
-//        calendar.set(Calendar.HOUR_OF_DAY, 0)
-//        calendar.set(Calendar.MINUTE, 0)
-//        calendar.set(Calendar.SECOND, 0)
-//        for (i in 0..Constants.DEFAULT_END_DATE_DAYS) {
-//            val currentTime = calendar.time
-//            val dateFormat = SimpleDateFormat(Constants.API_QUERY_DATE_FORMAT, Locale.getDefault())
-//            formattedDateList.add(dateFormat.format(currentTime))
-//            calendar.add(Calendar.DAY_OF_YEAR, 1)
-//        }
-//        val date = calendar.time
-//        date.time
-//        print("------${date.time}")
-//
-//        return formattedDateList
-//    }
+    private fun saveAppSetting(
+        userId: Long,
+        appPackageName: String,
+        lock: Boolean,
+        limited: Long
+    ): AppSetting {
+        val userAppSetting = appSettingRepository.searchUserAppSettingsByPackage(userId, appPackageName)
+        return if (userAppSetting.isNotEmpty()) {
+            val result = userAppSetting[0]
+            result.isLock = lock
+            result.isLimited = limited
+            appSettingRepository.save(result)
+        } else {
+            val result = AppSetting()
+            val user = userRepository.findById(userId).get()
+            val app = appRepository.getAppByAppPackage(appPackageName).get()
+            result.user = user
+            result.app = app
+            result.isLock = lock
+            result.isLimited = limited
+            appSettingRepository.save(result)
+        }
+    }
+
+    fun uploadUserAppSettings(userId: Long, appSettings: List<AppSetting>): BaseResponse<List<AppSetting>> {
+        val result = mutableListOf<AppSetting>()
+        for (app in appSettings) {
+            result.add(saveAppSetting(app.user!!.id, app.app!!.packageName, app.isLock, app.isLimited))
+        }
+        return resultSuccess(result)
+    }
+
+    fun getAppSetting(userId: Long): BaseResponse<List<AppSetting>> {
+        val result = appSettingRepository.searchUserAppSettings(userId)
+        return if (result.isEmpty()) {
+            resultEmpty()
+        } else {
+            resultSuccess(result)
+        }
+    }
+
+    fun uploadUserAppSetting(userId: Long, appSettings: AppSetting): BaseResponse<AppSetting> {
+        val result = saveAppSetting(userId, appSettings.app!!.packageName, appSettings.isLock, appSettings.isLimited)
+        return resultSuccess(result)
+    }
+
+    fun uploadUserAppSetting(userId: Long, appPackage: String, isLock: Boolean, isLimited: Long): BaseResponse<AppSetting> {
+        val result = saveAppSetting(userId, appPackage, isLock, isLimited)
+        return resultSuccess(result)
+    }
+
+    fun checkForDatabaseApps(apps: List<String>): BaseResponse<List<String>> {
+        val allApp = appRepository.findAll().map {
+            it.packageName
+        }
+        val result = mutableListOf<String>()
+        for (app in apps) {
+            if (!allApp.contains(app)) {
+                result.add(app)
+            }
+        }
+        return if (result.isEmpty()) {
+            resultEmpty()
+        } else {
+            resultSuccess(result)
+        }
+    }
+
 
 }

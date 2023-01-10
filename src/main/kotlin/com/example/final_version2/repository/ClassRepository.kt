@@ -13,7 +13,4 @@ interface ClassRepository : JpaRepository<ItemClass, Long> {
     @Query("select u from ItemClass u where u.teacher = ?1")
     fun findByTeacher(teacher: Teacher): List<ItemClass>
 
-    @Query("select u from ItemClass u where u.classId = ?1")
-    fun findByClassId(classId: UUID): Optional<ItemClass>
-
 }

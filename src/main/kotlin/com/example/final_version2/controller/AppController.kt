@@ -1,6 +1,7 @@
 package com.example.final_version2.controller
 
 import com.example.final_version2.base.BaseResponse
+import com.example.final_version2.model.AppSetting
 import com.example.final_version2.model.AppUsage
 import com.example.final_version2.model.Report
 import com.example.final_version2.service.AppService
@@ -36,7 +37,7 @@ class AppController {
         @RequestParam("app_name") appName: String,
         @RequestParam("time") time: Long,
         @RequestParam("action") action: Int
-    ): BaseResponse<Boolean> {
+    ): BaseResponse<AppUsage> {
         return appService.insertAppUsage(
             MyStringUtils().escapeDoubleQuotes(email),
             MyStringUtils().escapeDoubleQuotes(appPackage),
@@ -45,15 +46,6 @@ class AppController {
             action
         )
     }
-
-//    @PostMapping("insert_new_apps")
-//    fun insertNewApps(
-//        @RequestParam("app_package") appPackage: String,
-//        @RequestParam("app_name") appName: String,
-//        @RequestParam("image") appIcon: MultipartFile,
-//    ): BaseResponse<Boolean> {
-//        return appService.uploadApp(appName, appPackage, appIcon)
-//    }
 
     @GetMapping("get_user_app_usage")
     fun getUserAppUsage(
@@ -90,6 +82,38 @@ class AppController {
         @RequestParam("class_id") classId: Long
     ): BaseResponse<List<Report>> {
         return appService.getViolation(classId)
+    }
+
+    @PostMapping("upload_user_settings")
+    fun uploadUserSettings(
+        @RequestParam("user_id") userId: Long,
+        @RequestParam("app_setting") appSettings: List<AppSetting>
+    ): BaseResponse<List<AppSetting>> {
+        return appService.uploadUserAppSettings(userId, appSettings)
+    }
+
+    @PostMapping("upload_user_setting")
+    fun uploadUserSetting(
+        @RequestParam("user_id") userId: Long,
+        @RequestParam("app_package") appPackageName: String,
+        @RequestParam("is_lock") isLock: Boolean,
+        @RequestParam("is_limited") isLimited: Long
+    ): BaseResponse<AppSetting> {
+        return appService.uploadUserAppSetting(userId, appPackageName, isLock, isLimited)
+    }
+
+    @GetMapping("get_user_setting")
+    fun getUserAppSettings(
+        @RequestParam("user_id") userId: Long
+    ): BaseResponse<List<AppSetting>> {
+        return appService.getAppSetting(userId)
+    }
+
+    @PostMapping("upload_app_for_database_check")
+    fun upAPpForDatabaseCheck(
+        @RequestParam("apps") apps: List<String>
+    ): BaseResponse<List<String>> {
+        return appService.checkForDatabaseApps(apps)
     }
 
 }

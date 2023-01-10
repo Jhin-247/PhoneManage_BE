@@ -34,15 +34,6 @@ class UserController {
         val usernameToSave = MyStringUtils().escapeDoubleQuotes(username)
 
         when (role) {
-            Constants.Role.PERSONAL -> {
-                return userService.createNormalUser(
-                    emailToSave,
-                    passwordToSave,
-                    usernameToSave,
-                    role
-                )
-            }
-
             Constants.Role.PARENT -> {
                 return userService.createParentUser(
                     emailToSave,
@@ -138,36 +129,6 @@ class UserController {
         )
     }
 
-    @PostMapping("change_username")
-    fun changeUsername(
-        @RequestParam("email") email: String,
-        @RequestParam("access_token") accessToken: String,
-        @RequestParam("username") username: String
-    ): BaseResponse<User> {
-        val user = userService.getUserByEmail(
-            MyStringUtils().escapeDoubleQuotes(email)
-        )
-        return when (user.code) {
-            Constants.Code.SUCCESS -> {
-                userService.changeUsername(email, username)
-            }
-
-            else -> {
-                resultError(user.message)
-            }
-        }
-    }
-
-    @PostMapping("get_user_info")
-    fun getUserInfo(
-        @RequestParam("email") email: String,
-        @RequestParam("access_token") accessToken: String
-    ): BaseResponse<User> {
-        return userService.getUserByEmail(
-            MyStringUtils().escapeDoubleQuotes(email)
-        )
-    }
-
     @GetMapping("get_partner_info")
     fun getPartnerInfo(
         @RequestParam("email") email: String
@@ -177,32 +138,12 @@ class UserController {
         )
     }
 
-    @GetMapping("get_all_users")
-    fun getAllUser(): BaseResponse<List<User>> {
-        return userService.findAll()
-    }
-
     @GetMapping("get_all_children")
     fun getAllChildren(
         @RequestParam("email") email: String
     ): BaseResponse<List<User>> {
         return userService.getAllChildren(
             MyStringUtils().escapeDoubleQuotes(email)
-        )
-    }
-
-    @PostMapping("upload_user_usage")
-    fun uploadUserUsage(
-        @RequestParam("email") email: String,
-        @RequestParam("app_package") appPackageName: String,
-        @RequestParam("time") time: Long,
-        @RequestParam("action") action: Int
-    ): BaseResponse<Boolean> {
-        return userService.uploadUserUsage(
-            MyStringUtils().escapeDoubleQuotes(email),
-            MyStringUtils().escapeDoubleQuotes(appPackageName),
-            time,
-            action
         )
     }
 
@@ -284,33 +225,6 @@ class UserController {
             MyStringUtils().escapeDoubleQuotes(email),
             MyStringUtils().escapeDoubleQuotes(search)
         )
-    }
-
-    @PostMapping("action_for_request")
-    fun handleUserRequestAction(
-        @RequestParam("sender") senderEmail: String,
-        @RequestParam("request_id") requestId: Long,
-        @RequestParam("action") action: Int
-    ): BaseResponse<UserRelationshipRequest> {
-        val request = userService.handleRequestAction(
-            MyStringUtils().escapeDoubleQuotes(senderEmail),
-            requestId,
-            action
-        )
-        if (request.code == Constants.Code.SUCCESS) {
-            val content = if (action == Constants.RequestType.ACCEPT_ADD_PARTNER) {
-                "${request.data!!.receiver!!.username} has accepted your request"
-            } else {
-                "${request.data!!.receiver!!.username} has denied your request"
-            }
-            notificationService.createUserRequestNotification(
-                request.data!!,
-                request.data!!.requester!!.email,
-                request.data!!.requestTime,
-                content
-            )
-        }
-        return request
     }
 
     @PostMapping("update_user_information")

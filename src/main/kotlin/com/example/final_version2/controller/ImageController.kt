@@ -38,23 +38,4 @@ class ImageController {
             .body<ByteArrayResource>(byteArrayResource)
     }
 
-//    @GetMapping("get_user_image/{email}")
-//    @ResponseBody
-//    fun getImageDynamicType(
-//        @PathVariable("email") email: String,
-//        @RequestParam("jpg") jpg: Boolean
-//    ): ResponseEntity<InputStreamResource?>? {
-//        var actualPhotoPath = email
-//        if (actualPhotoPath.contains('@')) {
-//            actualPhotoPath = actualPhotoPath.substring(0, actualPhotoPath.indexOf('@'))
-//        }
-//        val contentType = if (jpg) MediaType.IMAGE_JPEG else MediaType.IMAGE_PNG
-//        val fileName = Paths.get("user-photos", "$actualPhotoPath.jpg")
-//        val inStream = javaClass.getResourceAsStream(fileName.toAbsolutePath().toString())
-//        print(fileName.toString())
-//        return ResponseEntity.ok()
-//            .contentType(contentType)
-//            .body<InputStreamResource?>(inStream?.let { InputStreamResource(it) })
-//    }
-
 }

@@ -17,12 +17,6 @@ class NotificationService {
     private lateinit var notificationRepository: NotificationRepository
 
     @Autowired
-    private lateinit var userRepository: UserRepository
-
-    @Autowired
-    private lateinit var userRequestNotificationRepository: UserRequestNotificationRepository
-
-    @Autowired
     private lateinit var addParentNotificationRepository: AddParentNotificationRepository
 
     @Autowired
@@ -53,27 +47,27 @@ class NotificationService {
         }
     }
 
-    fun createUserRequestNotification(
-        request: UserRelationshipRequest,
-        receiverEmail: String,
-        time: Long,
-        content: String
-    ): BaseResponse<RequestUserNotification> {
-//        val sender = userRepository.searchUserByEmail(senderId)
-        val receiver = userRepository.searchUserByEmail(receiverEmail)
-        val lastUserRequestNotification = userRequestNotificationRepository.getLastNotificationRequest(request)
-        if (lastUserRequestNotification.isPresent) {
-            return resultExisted()
-        }
-        val notification = RequestUserNotification()
-        notification.notificationType = Constants.NotificationType.REQUEST_PARTNER
-        notification.userRelationshipRequest = request
-        notification.receiver = receiver.get()
-        notification.time = time
-        notification.content = content
-        val result = notificationRepository.save(notification)
-        return resultSuccess(result)
-    }
+//    fun createUserRequestNotification(
+//        request: UserRelationshipRequest,
+//        receiverEmail: String,
+//        time: Long,
+//        content: String
+//    ): BaseResponse<RequestUserNotification> {
+////        val sender = userRepository.searchUserByEmail(senderId)
+//        val receiver = userRepository.searchUserByEmail(receiverEmail)
+//        val lastUserRequestNotification = userRequestNotificationRepository.getLastNotificationRequest(request)
+//        if (lastUserRequestNotification.isPresent) {
+//            return resultExisted()
+//        }
+//        val notification = RequestUserNotification()
+//        notification.notificationType = Constants.NotificationType.REQUEST_PARTNER
+//        notification.userRelationshipRequest = request
+//        notification.receiver = receiver.get()
+//        notification.time = time
+//        notification.content = content
+//        val result = notificationRepository.save(notification)
+//        return resultSuccess(result)
+//    }
 
     fun createAddParentRequestNotification(
         request: AddParentRequest,
